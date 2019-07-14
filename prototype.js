@@ -8,7 +8,6 @@ var bg;
 var style;
 var weight;
 var index;
-var j;
 
 for (var i = 0; i < len; ++i) {
 	node = nodeList[i];
@@ -23,9 +22,9 @@ for (var i = 0; i < len; ++i) {
 			elemGroups[index] = [];
 			allBgs.push(bg);
 			bgWeights.push(0);
-        };
+        	};
 		
-		if (weight==weight) bgWeights[index] += weight;
+		if (weight==weight) bgWeights[index] += weight;//make sure the weight isn't NaN
 		elemGroups[index].push(node);
 	};
 };
