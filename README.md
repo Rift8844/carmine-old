@@ -1,2 +1,2 @@
-# carmine
-Readme coming soon.
+# Carmine
+Readme with project details coming soon.
