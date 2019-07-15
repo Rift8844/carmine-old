@@ -1,22 +1,31 @@
-//carmine prototype
+//Carmine prototype
 //https://github.com/theultraman20/carmine
 //By theultraman20, GNU General Public License
 
+var bgNodeList = document.querySelectorAll(":not(html):not(script):not(link):not(title):not(meta)");
+var textNodeList = getTextNodes();
+var bgNodelen = bgNodeList.length;
+var textNodeLen = textNodeList.length;
+var colorDat, colorModProps, node;
 
-var nodeList = document.querySelectorAll(":not(html):not(script):not(link):not(title):not(meta)");
-var len = nodeList.length;
-var colorDat, colorModProps;
-
+function getTextNodes(){
+  var n, a=[], walk=document.createTreeWalker(document.querySelector("body"),NodeFilter.SHOW_TEXT,null,false);
+  while(n=walk.nextNode()) a.push(n);
+  return a;
+}
+//big thanks to phrogz for this: https://stackoverflow.com/questions/10730309/find-all-text-nodes-in-html-page
 
 function getColorData() {
     var allBgs = [];
+    var allTextColors = [];
     var bgWeights = [];
     var elemGroups = [];
+    var textGroups = [];
     var elemGroupsOrdered = [];//ordered by "weight" property
-    var numBgs, node, bg, style, weight, index, rank;
+    var numBgs, bg, textColor, style, weight, index, rank;
 
-    for (var i = 0; i < len; ++i) {
-        node = nodeList[i];
+    for (var i = 0; i < bgNodelen; ++i) {
+        node = bgNodeList[i];
         style = getComputedStyle(node);
         bg = style.getPropertyValue("background-color");
         weight = node.offsetWidth*node.offsetHeight;//calculate on-screen size
@@ -35,6 +44,22 @@ function getColorData() {
             elemGroups[index].push(node);
         };
     };
+
+    for (var i = 0; i < textNodeLen; ++i) {
+        node = textNodeList[i].parentElement;
+        textColor = getComputedStyle(node).getPropertyValue("color");
+
+        if (textColor != "") {
+            index = allTextColors.indexOf(textColor);
+            if (index==-1) {
+                index = allTextColors.length;
+                allTextColors.push(textColor);
+                textGroups[index] = [];
+            };
+        
+            textGroups[index].push(node);
+        };
+    }
     
     //order the elemgroups
     numBgs = allBgs.length;
@@ -47,7 +72,7 @@ function getColorData() {
         elemGroupsOrdered[rank] = elemGroups[i];
     };
 
-    return [elemGroupsOrdered, allBgs]
+    return [elemGroupsOrdered, allBgs, textGroups, allTextColors]
 };
 
 
@@ -108,6 +133,10 @@ function getClosestColor(ogColorStr, colorList, colorPropWeights, colorUsageList
     closestColor = colorList[colorScores.indexOf(Math.min(...colorScores))];
     
     return closestColor;
+};
+
+function getBestTextColor(textNode){
+    //todo
 };
 
 //MAIN FUNCTION------------------------------------------------------
