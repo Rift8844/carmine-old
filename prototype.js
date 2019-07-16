@@ -19,10 +19,11 @@ function getColorData() {
     var allBgs = [];
     var allTextColors = [];
     var bgWeights = [];
+    var bgWeightsOrdered = [];
     var elemGroups = [];
     var textGroups = [];
     var elemGroupsOrdered = [];//ordered by "weight" property
-    var numBgs, bg, textColor, style, weight, index, rank;
+    var bg, textColor, style, oldBgWeights, weight, numBgs, index;
 
     for (var i = 0; i < bgNodelen; ++i) {
         node = bgNodeList[i];
@@ -61,16 +62,15 @@ function getColorData() {
         };
     }
     
-    //order the elemgroups
-    numBgs = allBgs.length;
+    oldBgWeights = [...bgWeights];
+    numBgs = bgWeights.length;
     for (var i = 0; i < numBgs; ++i) {
-        rank = 0;
-        for (var j = 0; j < numBgs; ++j) {
-            if (bgWeights[i] < bgWeights[j]) rank++;
-        };
-        
-        elemGroupsOrdered[rank] = elemGroups[i];
+        bgWeightsOrdered.push(bgWeights.splice(bgWeights.indexOf(Math.max(...bgWeights)), 1)[0]);
     };
+    
+    for (var i = 0; i < numBgs; ++i) {
+        elemGroupsOrdered[i] = elemGroups[oldBgWeights.indexOf(bgWeightsOrdered[i])];
+    }
 
     return [elemGroupsOrdered, allBgs, textGroups, allTextColors]
 };
@@ -175,9 +175,9 @@ algorithm has when changing properties
 of the colors. Can be 0-1. 
 */
 colorPropWeights = {
-    h: 2, 
-    s: 2, 
-    l: 2, 
+    h: 4, 
+    s: 1, 
+    l: 1, 
     count: 1
 };
 /*
