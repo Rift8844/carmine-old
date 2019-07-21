@@ -72,7 +72,7 @@ function getColorData() {
         elemGroupsOrdered[i] = elemGroups[oldBgWeights.indexOf(bgWeightsOrdered[i])];
     }
 
-    return [elemGroupsOrdered, allBgs, textGroups, allTextColors]
+    return [elemGroups, allBgs, textGroups, allTextColors]
 };
 
 
@@ -81,32 +81,21 @@ s: max change in saturation (0-1)
 l: max change in light (0-1)
 */
 function modColor(ogColor, desiredColor, colorModProps){
-    var elemNewColors = [];
     var ogHsl, desiredHsl, newColor;
     
     //determine a list of new colors to be used
-    //for (var i = 0; i < elemGroups.length; ++i) {
     ogHsl = tinycolor(ogColor).toHsl();//background hsl model
     desiredHsl = tinycolor(desiredColor).toHsl();//hsl model of colorList color
-    newColor = desiredHsl;
-        
-        //create the new color saturation and light, but only within the specified range
-    if (desiredHsl.s > ogHsl.s) {
-        newColor.s = ogHsl.s+Math.min(colorModProps.s, desiredHsl.s-ogHsl.s);
-    } else {
-        newColor.s = ogHsl.s-Math.min(colorModProps.s, ogHsl.s-desiredHsl.s);
-    };
+    newColor = desiredHsl; 
+	//if (ogHsl.s == 0) return ogColor;
     
-    if (desiredHsl.l > ogHsl.l) {
-        newColor.l = ogHsl.l+Math.min(colorModProps.l, desiredHsl.l-ogHsl.l);
-    } else {
-        newColor.l = ogHsl.l-Math.min(colorModProps.l, ogHsl.l-desiredHsl.l);
-    };
+    //create the new color saturation and light, but only within the specified range
+    newColor.s = Math.abs(ogHsl.s-Math.min(colorModProps.s, Math.abs(ogHsl.s-desiredHsl.s)));
+    newColor.l = Math.abs(ogHsl.l-Math.min(colorModProps.l, Math.abs(ogHsl.l-desiredHsl.l)));
     
-    elemNewColors.push(tinycolor(newColor).toString());
     //};
     
-    return elemNewColors;
+    return tinycolor(newColor).toHexString();
 };
 
 
@@ -120,14 +109,23 @@ etc...
 }
 */
 function getClosestColor(ogColorStr, colorList, colorPropWeights, colorUsageList) {//maybe add colorFormat option later?
-    var ogColor = tinycolor(ogColorStr).toHsl();
+    var ogColor = tinycolor(ogColorStr);
+    var ogColorHsl = ogColor.toHsl();
+    var ogColorCmyk = ogColor.toCmyk();
     var numColors = colorList.length;
     var colorScores = [];
-    var color, closestColor;
+    var color, colorHsl, colorCmyk, closestColor;
     
     for (var i = 0; i < numColors; ++i) {
-        color = tinycolor(colorList[i]).toHsl();
-        colorScores[i] = Math.abs(ogColor.h-color.h)*colorPropWeights.h+Math.abs(ogColor.s-color.s)*colorPropWeights.s+Math.abs(ogColor.l-color.l)*colorPropWeights.l+colorUsageList[i]*colorPropWeights.count;//make sure colors aren't overused!
+        colorHsl = tinycolor(colorList[i]).toHsl();
+        colorCmyk = tinycolor(colorList[i]).toCmyk();
+        colorScores[i] = (Math.abs(ogColorCmyk.c-colorCmyk.c)+Math.abs(ogColorCmyk.m-colorCmyk.m)+Math.abs(ogColorCmyk.y-colorCmyk.y))/360*colorPropWeights.h+Math.abs(ogColorHsl.s-colorHsl.s)*colorPropWeights.s+Math.abs(ogColorHsl.l-colorHsl.l)*colorPropWeights.l+colorUsageList[i]*colorPropWeights.count;//make sure colors aren't overused!
+
+        /*console.log("\n=========================\n"+colorList[i].toUpperCase() + " COLOR SCORE DATA: ");
+        console.log("   Cmyk score: " + (Math.abs(ogColorCmyk.c-colorCmyk.c)+Math.abs(ogColorCmyk.m-colorCmyk.m)+Math.abs(ogColorCmyk.y-colorCmyk.y))/360*colorPropWeights.h);
+        console.log("   Saturation score: " + Math.abs(ogColorHsl.s-colorHsl.s)*colorPropWeights.s);
+        console.log("   Luminance score: " + Math.abs(ogColorHsl.l-colorHsl.l)*colorPropWeights.l);
+        console.log("TOTAL: " + colorScores[i]);*/
     };
 
     closestColor = colorList[colorScores.indexOf(Math.min(...colorScores))];
@@ -166,8 +164,8 @@ function themePage(elemGroups, bgs, colorList, colorModProps, colorPropWeights) 
 colorData = getColorData();
 
 colorModProps = {
-    s: 0.8,
-    l: 0.2
+    s: 1,
+    l: 1
 };
 /*
 How much flexibility the color changing 
@@ -175,10 +173,10 @@ algorithm has when changing properties
 of the colors. Can be 0-1. 
 */
 colorPropWeights = {
-    h: 4, 
-    s: 1, 
-    l: 1, 
-    count: 1
+    h: 1, 
+    s: 0, 
+    l: 0, 
+    count: 0
 };
 /*
 How much each property matters when
